@@ -24,6 +24,10 @@ li{
 
 }
 
+#netWorkChart{
+	border: blue 2px solid;
+}
+
 #clicks{
 	list-style-type: circle;
 	position:absolute;

@@ -1,7 +1,12 @@
+
+
 var socket = io.connect('/scrape');
 socket.on('connection', function (data) {
     console.log(data+ ' connection?????')
     localStorage.setItem("socketId", data)
+})
+socket.on('gogetit', function(){
+	console.log('this worked')
 })
 
 
@@ -167,8 +172,10 @@ function getIPdata(e){
 		console.log('Fail '+err)
 	}).
 	done(function(result){
+		DOMtrafficList.innerHTML='';
 		console.log('Ajax done ')
-												//build js to display the message
+		var chartArrayArray = [['time', 'bytes']]
+
 		if(result.errorMessage === undefined){
 			console.log(result.message)
 			console.log(result.message.length)
@@ -176,6 +183,7 @@ function getIPdata(e){
 			for(var x = 0;x<listLength;x++){
 				var DeltaTime='';
 				var DeltaBytes = '';
+				var chartRowDataArry = []
 				var li = document.createElement('li')
 				if(x>0){
 					console.log(new Date(result.message[x].dateTime))
@@ -186,12 +194,38 @@ function getIPdata(e){
 					DeltaBytes = nowBytes-pastBytes
 					Deltatime = nowTime-pastTime
 					console.log(Deltatime)
+					chartRowDataArry.push(nowTime)
+					chartRowDataArry.push(DeltaBytes)
+					chartArrayArray.push(chartRowDataArry)
 
 
 					li.innerHTML = 'Bytes: '+nowBytes+' : Change in Bytes = '+DeltaBytes/1000+'kb<br> currentTime:'+nowTime+' => change in time = '+Deltatime/1000+' seconds.'
 					DOMtrafficList.appendChild(li)
 				}
 			}
+			google.charts.load('current', {packages: ['corechart']});
+			google.charts.setOnLoadCallback(drawChart);
+			function drawChart() {
+			      // Define the chart to be drawn.
+			     var data = google.visualization.arrayToDataTable(chartArrayArray)
+			     	// [
+			               // ['Year', 'Sales', 'Expenses'],
+			               // ['2004',  1000,      400],
+			               // ['2005',  1170,      460],
+			               // ['2006',  660,       1120],
+			               // ['2007',  1030,      540]
+			             // ]);
+
+			             var options = {
+			               title: 'Company Performance',
+			               // curveType: 'function',
+			               legend: { position: 'bottom' }
+			             };
+
+			      // Instantiate and draw the chart.
+			      var chart = new google.visualization.LineChart(document.getElementById('netWorkChart'));
+			      chart.draw(data, options);
+			    }				//build js to display the message
 
 		}else{
 			console.log('got an error in ajax call to get IP data on client side?')
