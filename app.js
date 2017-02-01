@@ -6,33 +6,35 @@ var http = require('http');
 var app = express();
 var server = http.createServer(app);
 var io = require('socket.io')(server);
+var socketConnectonsArray = []
+
 // var s = require('net').Socket();
 // var socketConnectionInterval = setInterval(function(){
-// 	s.connect(5454)
-// 		.on('connect', socketConnect)
-// 		.on('error', socketError)
+//  s.connect(5454)
+//    .on('connect', socketConnect)
+//    .on('error', socketError)
 // },2000) 
 // function tryReconnectSocket(){
-// 	this.removeListener('close', tryReconnectSocket)
-// 	this.removeListener('error', socketError)
-// 	this.removeListener('connect', socketConnect)
-// 	 socketConnectionInterval = setInterval(function(){
-// 		s.connect(5454)
-// 			.on('connect', socketConnect)
-// 			.on('error', socketError)
-// 	},2000) 
+//  this.removeListener('close', tryReconnectSocket)
+//  this.removeListener('error', socketError)
+//  this.removeListener('connect', socketConnect)
+//   socketConnectionInterval = setInterval(function(){
+//    s.connect(5454)
+//      .on('connect', socketConnect)
+//      .on('error', socketError)
+//  },2000) 
 // }
 // function socketConnect(){
-// 	clearInterval(socketConnectionInterval)
-// 	this.removeListener('error', socketError)
-// 	this.removeListener('connect', socketConnect)
-// 	console.log('socket connection')
-// 	this.on('close', tryReconnectSocket)
+//  clearInterval(socketConnectionInterval)
+//  this.removeListener('error', socketError)
+//  this.removeListener('connect', socketConnect)
+//  console.log('socket connection')
+//  this.on('close', tryReconnectSocket)
 // }
 // function socketError(){
-// 	this.removeListener('error', socketError)
-// 	this.removeListener('connect', socketConnect)
-// 	console.log('error')
+//  this.removeListener('error', socketError)
+//  this.removeListener('connect', socketConnect)
+//  console.log('error')
 // }
 
 
@@ -42,54 +44,60 @@ var databaseFunctions = require('./databaseFunctions.js')
 
 app.use(express.static('assets'));
 app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({
+    extended: true
+})); // for parsing application/x-www-form-urlencoded
 
-server.listen(3232, function(){
-	console.log('listening on 3232 dirName__: '+ __dirname)
+server.listen(3232, function() {
+    console.log('listening on 3232 dirName__: ' + __dirname)
 })
 
-var scrapeSocket = io.of('/scrape').on('connection', function(socket){
-		console.log('socket scraping')
-		socket.emit('gogetit', 'data')
-})
-
-
-
-app.get('/', function(req, res){
-	res.sendFile(__dirname+'/index.html')
+var scrapeSocket = io.of('/scrape').on('connection', function(socket) {
+    socketConnectonsArray.push(socket)
+    console.log('socket scraping client')
+    socket.emit('gogetit', 'data')
 })
 
 
 
+app.get('/', function(req, res) {
+    res.sendFile(__dirname + '/index.html')
+})
 
-app.post('/getIPdata', function(req, res){
-  var id=req.body.id
-  var asis=req.body.asis
-  console.log('Got request for IP data')
-  var dataObj={}
-  var query = {'id':id,
-             'asis':asis}
-  databaseFunctions.FindInCollection('IPTraffic', query, function(resultObj){
-    res.send(resultObj)
-  })
+
+
+
+app.post('/getIPdata', function(req, res) {
+    var id = req.body.id
+    var asis = req.body.asis
+    console.log('Got request for IP data')
+    var dataObj = {}
+    var query = {
+        'id': id,
+        'asis': asis
+    }
+    databaseFunctions.FindInCollection('IPTraffic', query, function(resultObj) {
+        res.send(resultObj)
+    })
 
 })
 
 
 
-function emitDatetoSocket(data, socket){
-	socket.emit('newNetworkData', data)
+function emitDatetoSocket(emitEvent, data, socketArray) {
+    for (var x = 0; x < socketArray.length; x++) {
+        socketArray[x].emit(emitEvent, data)
+    }
 }
 
 
 
-// var request = require('request')
-// var cheerio = require('cheerio')
-// var MongoClient = require('mongodb').MongoClient
-// var url = 'http://192.168.200.1/xslt?PAGE=C_1_0'
-// var dbUrl = 'mongodb://localhost:27017/users'
-// var count = 0
-// socketConnectonsArray=[]
+var cheerio = require('cheerio')
+var request = require('request');
+var MongoClient = require('mongodb').MongoClient
+var url = 'http://192.168.200.1/xslt?PAGE=C_1_0'
+var dbUrl = 'mongodb://localhost:27017/users'
+var count = 0
 // require('net').createServer(function (socket) {
 //     console.log("connected");
 //     socketConnectonsArray.push(socket)
@@ -99,101 +107,137 @@ function emitDatetoSocket(data, socket){
 // })
 
 // .listen(5454, function(){
-// 	console.log('port 5454')
+//         console.log('port 5454')
 // });
-// setInterval(function(){
-//  count++
-// request(url, function(error, response, body) {
-//       console.log('requesting '+url)
-//         if (!error && response.statusCode === 200) {
-//             if (body) {
-//                 var chee = cheerio.load(body)
-//                 tableData = chee('table').eq(3).html()
-//                 var table3 = cheerio.load(tableData)
-//                   // IP_Trafic_data0 = table3('tr').eq(0).html()
-//                   IP_Trafic_data1 = table3('tr').eq(1).html()
-//                   IP_Trafic_data2 = table3('tr').eq(2).html()
-//                   IP_Trafic_data3 = table3('tr').eq(3).html()
-//                   IP_Trafic_data4 = table3('tr').eq(4).html()
-//                   IP_Trafic_data5 = table3('tr').eq(5).html()
-//                   IP_Trafic_data6 = table3('tr').eq(6).html()
-// 				IPDataArray = [IP_Trafic_data1, IP_Trafic_data2, IP_Trafic_data3, IP_Trafic_data4, IP_Trafic_data5, IP_Trafic_data6]
-// 				var final_IP_Data = []
-//                 for(var x = 0;x<IPDataArray.length;x++){
-//                   var type, asis;
-//                   var $ = cheerio.load(IPDataArray[x])
-//                   //skip x = 2 and 3
-//                   if(x === 2|| x===3){continue}
+setInterval(function() {
+    count++
 
-//                   if(x===0){
-//                     console.log('transmit IP traffic')
-//                     type = 'transmit'
-//                     asis = 'IP'
-//                   }
-//                   if(x===1){
-//                     console.log('Receive IP traffic')
-//                     type = 'receive'
-//                     asis = 'IP'
-//   }
-//                   if(x===4){
-//                     console.log('Transmit ATM traffic')
-//                     type = 'transmit'
-//                     asis = 'ATM'
+    request(url, function(error, response, body) {
+        console.log('requesting ' + url)
+        if (!error && response.statusCode === 200) {
+            if (body) {
+                var chee = cheerio.load(body)
+                tableData = chee('table').eq(3).html()
+                var table3 = cheerio.load(tableData)
+                // IP_Trafic_data0 = table3('tr').eq(0).html()
+                IP_Trafic_data1 = table3('tr').eq(1).html()
+                IP_Trafic_data2 = table3('tr').eq(2).html()
+                IP_Trafic_data3 = table3('tr').eq(3).html()
+                IP_Trafic_data4 = table3('tr').eq(4).html()
+                IP_Trafic_data5 = table3('tr').eq(5).html()
+                IP_Trafic_data6 = table3('tr').eq(6).html()
+                IPDataArray = [IP_Trafic_data1, IP_Trafic_data2, IP_Trafic_data3, IP_Trafic_data4, IP_Trafic_data5, IP_Trafic_data6]
+                var final_IP_Data = []
+                for (var x = 0; x < IPDataArray.length; x++) {
+                    var type, asis;
+                    var $ = cheerio.load(IPDataArray[x])
+                    //skip x = 2 and 3
+                    if (x === 2 || x === 3) {
+                        continue
+                    }
 
-//                   }
-//                   if(x===5){
-//                     console.log('Receive ATM traffic')
-//                     type = 'receive'
-//                     asis = 'ATM'
+                    if (x === 0) {
 
-//                   }
-//                   var ID = $('td').eq(0).text()
-//                   var Bytes = $('td').eq(1).text()
-//                   var Packets = $('td').eq(2).text()
-//                   var Errors = $('td').eq(3).text()
-//                   var Percent = $('td').eq(4).text()
-//                   console.log(ID)
-//                   console.log(Bytes)
-//                   console.log(Packets)
-//                   console.log(Errors)
-//                   console.log(Percent)
-//                   var data = {
-//                     id :ID,
-//                     type:type,
-//                     asis:asis,
-//                     bytes:Bytes,
-//                     packets:Packets,
-//                     errors:Errors,
-//                     perc:Percent,
-//                     dateTime:new Date()
-//                   }
-//                   final_IP_Data.push(data)
+                        console.log('transmit IP traffic')
+                        type = 'transmit'
+                        asis = 'IP'
+                    }
+                    if (x === 1) {
+                        console.log('Receive IP traffic')
+                        type = 'receive'
+                        asis = 'IP'
+                    }
+                    if (x === 4) {
+                        console.log('Transmit ATM traffic')
+                        type = 'transmit'
+                        asis = 'ATM'
 
-//                 }
-//   				console.log(final_IP_Data)
-//   				for(var x = 0;x<socketConnectonsArray;x++){
-//   					socketConnectonsArray[x].emit(final_IP_Data)
-//   				}
-//                 var url = 'mongodb://localhost:27017/users';
-//                 MongoClient.connect(dbUrl, function(err, db) {
-//                   if(err){console.log('error final ip data')}
-//                     else{
-//                       var collection = db.collection('IPTraffic');
-//                       for(var x = 0;x<final_IP_Data.length;x++){
-//                         collection.insert(final_IP_Data[x], function(err, result){
-//                           if(err){console.log(err)}
-//                             else{console.log(result)}
-//                         })
-//                       }
-//                     }
-//                 })//mongo
-//             }else{
-//               console.log('no body?')
-//             }
-//           }else{
-//             socket.emit('serverResponse', error)
-//             console.log(error)
-//           }
-//         })
-// console.log(count)
-// },1000*60)
+                    }
+                    if (x === 5) {
+                        console.log('Receive ATM traffic')
+                        type = 'receive'
+                        asis = 'ATM'
+
+                    }
+                    var ID = $('td').eq(0).text()
+                    var Bytes = $('td').eq(1).text()
+
+                    var Packets = $('td').eq(2).text()
+                    var Errors = $('td').eq(3).text()
+                    var Percent = $('td').eq(4).text()
+                    console.log(ID)
+                    console.log(Bytes)
+                    console.log(Packets)
+                    console.log(Errors)
+                    console.log(Percent)
+                    var data = {
+                        id: ID,
+                        type: type,
+                        asis: asis,
+                        bytes: Bytes,
+                        packets: Packets,
+                        errors: Errors,
+                        perc: Percent,
+                        dateTime: new Date()
+                    }
+                    final_IP_Data.push(data)
+
+                }
+                console.log(final_IP_Data)
+
+                for (var x = 0; x < socketConnectonsArray; x++) {
+                    socketConnectonsArray[x].emit(final_IP_Data)
+
+                }
+                // var url = 'mongodb://localhost:27017/users';
+                MongoClient.connect(dbUrl, function(err, db) {
+                    if (err) {
+                      emitDatetoSocket('serverResponse', {
+                          status: 'error',
+                          data: err,
+                          message:"error connection to into DB"
+                      }, socketConnectonsArray)
+                        console.log('error final ip data')
+                    } else {
+                        var collection = db.collection('IPTraffic');
+                        for (var x = 0; x < final_IP_Data.length; x++) {
+                            collection.insert(final_IP_Data[x], function(err, result) {
+                                if (err) {
+                                  emitDatetoSocket('serverResponse', {
+                                      status: 'error',
+                                      data: err,
+                                      message:"error inserting into DB"
+                                  }, socketConnectonsArray)
+                                    console.log(err)
+                                } else {
+                                    emitDatetoSocket('serverResponse', {
+                                        status: 'success',
+                                        data: result,
+                                        message:"Everything is working great"
+                                    }, socketConnectonsArray)
+                                    // console.log(result)
+                                    console.log('result length '+result.length)
+                                }
+                            })
+                        }
+                    }
+                }) //mongo
+            } else {
+                console.log('no body?')
+                emitDatetoSocket('serverResponse', {
+                    status: 'error',
+                    data: error,
+                    message:'no body data?'
+                }, socketConnectonsArray)
+            }
+        } else {
+            emitDatetoSocket('serverResponse', {
+                status: 'error',
+                data: error,
+                message:'Getting 404'
+            }, socketConnectonsArray)
+            console.log(error)
+        }
+    })
+    console.log(count)
+}, 1000 *60* 5)

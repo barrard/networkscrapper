@@ -33,18 +33,19 @@ socket.emit('scrape', url.val())
 
     };
 })
+var workingIndicator = document.getElementById('workingIndicator')
 socket.on('serverResponse', function(data){
 	console.log('Serve Status '+data.status)
 	if(data.status === "success"){
-		$('#HTML').html(data.body)
-		$('#coverUp').css('display','none')
-
+		workingIndicator.style.background = 'green'
+	}else if(data.status === "error"){
+		workingIndicator.style.background = 'red'
 	}
+	workingIndicator.innerHTML=data.message
 	console.log('server scrape response')
     console.log(data)
     $('#coverUp').css('display','none')
-    //if (data ==='success') {saveHTML(url.val(), data)};
-    // document.location.reload()
+
 })
 
 
@@ -174,7 +175,7 @@ function getIPdata(e){
 	done(function(result){
 		DOMtrafficList.innerHTML='';
 		console.log('Ajax done ')
-		var chartArrayArray = [['time', 'bytes']]
+		var chartArrayArray = [['time', 'kilobytes']]
 
 		if(result.errorMessage === undefined){
 			console.log(result.message)
@@ -192,10 +193,11 @@ function getIPdata(e){
 					var nowTime = new Date(result.message[x].dateTime)
 					var nowBytes = result.message[x].bytes
 					DeltaBytes = nowBytes-pastBytes
+					if(DeltaBytes<1){DeltaBytes=0}
 					Deltatime = nowTime-pastTime
 					console.log(Deltatime)
 					chartRowDataArry.push(nowTime)
-					chartRowDataArry.push(DeltaBytes)
+					chartRowDataArry.push(DeltaBytes/1000)
 					chartArrayArray.push(chartRowDataArry)
 
 
